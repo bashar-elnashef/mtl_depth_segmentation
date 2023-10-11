@@ -1,0 +1,26 @@
+{
+    "name": "MTL-Segmention-Depth-Normals",
+    "n_gpu": 1,
+    "data_loader": {
+        "type": "NYU2",
+        "args":{
+            "data_dir": "data/NYU2/",
+            "batch_size": 32,
+            "shuffle": true,
+            "validation_split": 0.2,
+            "num_workers": 2,
+            "url":"https://drive.google.com/uc?/export=download&id=1nbX4kLgqtILsePPk2pGyMRdQykC2T-uF"
+        }
+    },
+    "trainer": {
+        "epochs": 1,
+
+        "save_dir": "saved/",
+        "save_period": 1,
+        "verbosity": 2,
+        
+        "monitor": "min val_loss",
+        "early_stop": 10,
+        "tensorboard": true
+    }
+}
