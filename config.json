@@ -23,7 +23,7 @@
         "tensorboard": true
     },
     "data_downloader":{
-        "type": "NYUv2",
+        "type": "NYUV2Downloader",
         "args":{
             "download": false,
             "destination": "data/",

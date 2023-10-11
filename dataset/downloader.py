@@ -19,7 +19,7 @@ from collections import OrderedDict
 
 
 
-class NYUV2DataDownloader(object):
+class NYUV2Downloader(object):
     def __init__(self, url, destination=None, download=False, 
                     procesess=False, exist_ok=True, save_colored=True):
         self._url = url
@@ -176,3 +176,5 @@ class NYUV2DataDownloader(object):
     
     # TODO: add getter methods for data paths and lengths 
     # required for the dataset and dataloader classes
+
+    # TODO: add a __str__ method to the class 

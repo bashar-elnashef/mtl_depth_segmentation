@@ -2,6 +2,7 @@ import argparse
 from parse_config import ConfigParser 
 import numpy as np
 from utils import util
+import dataset.downloader as download
 import torch
 
 # fix random seeds for reproducibility
@@ -28,11 +29,7 @@ if __name__ == '__main__':
 
     config = ConfigParser.from_args(args)
     
-    print(config['data_loader']['args'])
+    downloader = config.init_obj('data_downloader', download)
 
-    # util.download_nyu2_dataset(url=config['data_loader']['args']['url'],
-    #         destination=config['data_loader']['args']['data_dir'], download=True)
 
-    util.NYUV2DataDownloader(url=config['data_loader']['args']['url'],
-            destination=config['data_loader']['args']['data_dir'], download=False, 
-            procesess=False, exist_ok=True, save_colored=False)
+
