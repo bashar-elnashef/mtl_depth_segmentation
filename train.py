@@ -34,5 +34,5 @@ if __name__ == '__main__':
     #         destination=config['data_loader']['args']['data_dir'], download=True)
 
     util.NYUV2DataDownloader(url=config['data_loader']['args']['url'],
-            destination=config['data_loader']['args']['data_dir'], download=True, 
+            destination=config['data_loader']['args']['data_dir'], download=False, 
             procesess=False, exist_ok=True, save_colored=False)

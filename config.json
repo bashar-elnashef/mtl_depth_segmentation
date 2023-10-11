@@ -8,8 +8,7 @@
             "batch_size": 32,
             "shuffle": true,
             "validation_split": 0.2,
-            "num_workers": 2,
-            "url":"https://drive.google.com/uc?/export=download&id=1U-xpq-ZmYTDc46dhDu3uUfAXLGdyYDmA"
+            "num_workers": 2
         }
     },
     "trainer": {
@@ -22,5 +21,16 @@
         "monitor": "min val_loss",
         "early_stop": 10,
         "tensorboard": true
+    },
+    "data_downloader":{
+        "type": "NYUv2",
+        "args":{
+            "download": false,
+            "destination": "data/",
+            "procesess": false,
+            "exist_ok": true,
+            "save_colored": false,
+            "url":"https://drive.google.com/uc?/export=download&id=1U-xpq-ZmYTDc46dhDu3uUfAXLGdyYDmA"
+        }
     }
 }
