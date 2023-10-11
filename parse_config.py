@@ -4,9 +4,10 @@ from pathlib import Path
 # from functools import reduce, partial
 # from operator import getitem
 from datetime import datetime
-# from logger import setup_logging
+from logger import setup_logging
 from utils.util import read_json, write_json
 from typing import Dict
+import dataset.downloader as download
 
 
 
@@ -19,7 +20,6 @@ class ConfigParser:
         """
         # load config file and apply modification
         self._config = config
-
 
         # set save_dir where trained model and log will be saved.
         save_dir = Path(self.config['trainer']['save_dir'])
@@ -40,12 +40,12 @@ class ConfigParser:
         write_json(self.config, self.save_dir / 'config.json')
 
         # TODO: configure logging module and add logging class into logger folder.
-        # setup_logging(self.log_dir)
-        # self.log_levels = {
-        #     0: logging.WARNING,
-        #     1: logging.INFO,
-        #     2: logging.DEBUG
-        # }
+        setup_logging(self.log_dir)
+        self.log_levels = {
+            0: logging.WARNING,
+            1: logging.INFO,
+            2: logging.DEBUG
+        }
 
     @classmethod
     def from_args(cls, args, options=''):
@@ -73,6 +73,8 @@ class ConfigParser:
             # update new config for fine-tuning
             config.update(read_json(args.config))
 
+        if args.download: self.downloader = cls.init_obj(config, 'data_downloader', download)
+
         # parse custom cli options into dictionary
         modification = {opt.target : getattr(args, _get_opt_name(opt.flags)) for opt in options}
         return cls(config, resume, modification)
@@ -93,6 +95,14 @@ class ConfigParser:
         ), 'Overwriting kwargs given in config file is not allowed'
         module_args.update(kwargs)
         return getattr(module, module_name)(*args, **module_args)
+
+
+    def get_logger(self, name, verbosity=2):
+        msg_verbosity = f'verbosity option {verbosity} is invalid. Valid options are {self.log_levels.keys()}.'
+        assert verbosity in self.log_levels, msg_verbosity
+        logger = logging.getLogger(name)
+        logger.setLevel(self.log_levels[verbosity])
+        return logger
 
     def __getitem__(self, name):
         """Access items like ordinary dict."""

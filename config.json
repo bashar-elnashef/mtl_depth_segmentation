@@ -25,7 +25,7 @@
     "data_downloader":{
         "type": "NYUV2Downloader",
         "args":{
-            "download": false,
+            "download": true,
             "destination": "data/",
             "procesess": false,
             "exist_ok": true,

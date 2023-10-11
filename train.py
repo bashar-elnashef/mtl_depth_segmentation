@@ -15,7 +15,8 @@ np.random.seed(SEED)
 
 def main(config: ConfigParser):
     """main code"""
-    pass
+    logger = config.get_logger('train')
+    
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='Multi-task learner for' +
@@ -26,10 +27,14 @@ if __name__ == '__main__':
                         help='path to latest checkpoint (default: None)')
     args.add_argument('-d', '--device', default=None, type=str, 
                         help='indices of GPUs to enable (default: all)')
+    args.add_argument('--download', default=False, type=bool, 
+                        help='bool parameter if the data is to be downloaded or not (default: False)')
 
     config = ConfigParser.from_args(args)
     
-    downloader = config.init_obj('data_downloader', download)
+    main(config=config)
 
-
+    # downloader = config.init_obj('data_downloader', download)
+    # args = args.parse_args()
+    # print(args.download)
 
