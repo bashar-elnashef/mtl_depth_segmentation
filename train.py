@@ -14,7 +14,7 @@ np.random.seed(SEED)
 
 def main(config: ConfigParser):
     """main code"""
-    config
+    pass
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='Multi-task learner for' +
@@ -30,6 +30,9 @@ if __name__ == '__main__':
     
     print(config['data_loader']['args'])
 
-    util.download_nyu2_dataset(url=config['data_loader']['args']['url'],
-                               destination=config['data_loader']['args']['data_dir'],
-                               download=True)
+    # util.download_nyu2_dataset(url=config['data_loader']['args']['url'],
+    #         destination=config['data_loader']['args']['data_dir'], download=True)
+
+    util.NYUV2DataDownloader(url=config['data_loader']['args']['url'],
+            destination=config['data_loader']['args']['data_dir'], download=True, 
+            procesess=False, exist_ok=True, save_colored=False)

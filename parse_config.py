@@ -81,7 +81,7 @@ class ConfigParser:
     def __getitem__(self, name):
         """Access items like ordinary dict."""
         return self.config[name]
-        
+
     # setting read-only attributes
     @property
     def config(self):
@@ -94,8 +94,6 @@ class ConfigParser:
     @property
     def log_dir(self):
         return self._log_dir
-
-
 
 
 # def _get_opt_name(flags):
