@@ -6,9 +6,146 @@ import pandas as pd
 from pathlib import Path
 from itertools import repeat
 from collections import OrderedDict
+import torch 
+import torch.nn as nn
 import gdown
 
-# TODO: Use ensure dir in downloader class
+
+def conv3x3(in_channels, out_channels, stride=1, dilation=1, groups=1, bias=False):
+    """3x3 Convolution: Depthwise: https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html"""
+    return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=dilation, dilation=dilation, bias=bias, groups=groups)
+
+def conv1x1(in_channels, out_channels, stride=1, groups=1, bias=False,):
+    "1x1 Convolution: Pointwise"
+    return nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, padding=0, bias=bias, groups=groups)
+
+def batchnorm(num_features):
+    """https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html"""
+    return nn.BatchNorm2d(num_features, affine=True, eps=1e-5, momentum=0.1)
+
+def convbnrelu(in_channels, out_channels, kernel_size, stride=1, groups=1, act=True):
+    "conv-batchnorm-relu"
+    if act:
+        return nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, 
+                            padding=int(kernel_size / 2.), groups=groups, bias=False),
+                            batchnorm(out_channels),
+                            nn.ReLU6(inplace=True))
+    else:
+        return nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, 
+                            padding=int(kernel_size / 2.), groups=groups, bias=False),
+                            batchnorm(out_channels))
+                        
+class Normalise(object):
+    """Normalise a tensor image with mean and standard deviation.
+    Given mean: (R, G, B) and std: (R, G, B),
+    will normalise each channel of the torch.*Tensor, i.e.
+    channel = (scale * channel - mean) / std
+
+    Args:
+        scale (float): Scaling constant.
+        mean (sequence): Sequence of means for R,G,B channels respecitvely.
+        std (sequence): Sequence of standard deviations for R,G,B channels
+            respecitvely.
+        depth_scale (float): Depth divisor for depth annotations.
+
+    """
+
+    def __init__(self, scale, mean, std, depth_scale=1.0):
+        self.scale = scale
+        self.mean = mean
+        self.std = std
+        self.depth_scale = depth_scale
+
+    def __call__(self, sample):
+        sample["image"] = (self.scale * sample["image"] - self.mean) / self.std
+        if "depth" in sample:
+            sample["depth"] = sample["depth"] / self.depth_scale
+        return sample
+        
+class RandomCrop(object):
+    """Crop randomly the image in a sample.
+
+    Args:
+        crop_size (int): Desired output size.
+
+    """
+
+    def __init__(self, crop_size):
+        assert isinstance(crop_size, int)
+        self.crop_size = crop_size
+        if self.crop_size % 2 != 0:
+            self.crop_size -= 1
+
+    def __call__(self, sample):
+        image = sample["image"]
+        msk_keys = sample["names"]
+        h, w = image.shape[:2]
+        new_h = min(h, self.crop_size)
+        new_w = min(w, self.crop_size)
+        top = np.random.randint(0, h - new_h + 1)
+        left = np.random.randint(0, w - new_w + 1)
+        sample["image"] = image[top : top + new_h, left : left + new_w]
+        for msk_key in msk_keys:
+            sample[msk_key] = sample[msk_key][top : top + new_h, left : left + new_w]
+        return sample
+
+
+class ToTensor(object):
+    """Convert ndarrays in sample to Tensors."""
+
+    def __call__(self, sample):
+        image = sample["image"]
+        msk_keys = sample["names"]
+        # swap color axis because
+        # numpy image: H x W x C
+        # torch image: C X H X W
+        sample["image"] = torch.from_numpy(image.transpose((2, 0, 1)))
+        for msk_key in msk_keys:
+            sample[msk_key] = torch.from_numpy(sample[msk_key]).to(
+                KEYS_TO_DTYPES[msk_key]
+            )
+        return sample
+        
+class RandomMirror(object):
+    """Randomly flip the image and the mask"""
+
+    def __call__(self, sample):
+        image = sample["image"]
+        msk_keys = sample["names"]
+        if do_mirror := np.random.randint(2):
+            sample["image"] = cv2.flip(image, 1)
+            for msk_key in msk_keys:
+                scale_mult = [-1, 1, 1] if "normal" in msk_key else 1
+                sample[msk_key] = scale_mult * cv2.flip(sample[msk_key], 1)
+        return sample
+
+
+class AverageMeter:
+    """Simple running average estimator.
+    Args:
+      momentum (float): running average decay.
+    """
+
+    def __init__(self, momentum=0.99):
+        self.momentum = momentum
+        self.avg = 0
+        self.val = None
+
+    def update(self, val):
+        """Update running average given a new value.
+        The new running average estimate is given as a weighted combination \
+        of the previous estimate and the current value.
+        Args:
+          val (float): new value
+        """
+        if self.val is None:
+            self.avg = val
+        else:
+            self.avg = self.avg * self.momentum + val * (1.0 - self.momentum)
+        self.val = val
+
+
+
 def ensure_dir(dirname):
     dirname = Path(dirname)
     if not dirname.is_dir():

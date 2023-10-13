@@ -69,6 +69,8 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
+*notebook.py
 
 # pyenv
 .python-version
@@ -110,3 +112,8 @@ datasets/
 .vscode/
 .idea/
 __MACOSX/
+
+# models
+*.pth
+*.pth.tar
+args.json

@@ -1,23 +1,62 @@
 {
     "name": "MTL-Segmention-Depth-Normals",
     "n_gpu": 1,
+    "architecture": {
+        "type": "hydranet",
+        "args": {
+            "encoder": "MobileNetv2",
+            "decoder": "MTLWRefineNet",
+            "dec_cls": 40
+        }
+    },
     "data_loader": {
-        "type": "NYUv2",
+        "type": "CustomNYUv2DataLoader",
         "args":{
             "data_dir": "data/",
-            "batch_size": 32,
+            "batch_size": 16,
+            "masks": ["seg40", "depth"],
             "shuffle": true,
             "validation_split": 0.2,
             "num_workers": 2
         }
     },
+    "optimizer_encoder": {
+        "type": "SGD",
+        "args":{
+            "lr": 0.01,
+            "momentum": 0.9,
+            "weight_decay": 0.00001
+        }
+    },
+    "optimizer_decoder": {
+        "type": "SGD",
+        "args":{
+            "lr": 0.001,
+            "momentum": 0.9,
+            "weight_decay": 0.00001
+        }
+    },
+    "loss_depth": {
+        "type": "InvHuberLoss",
+        "ignore": 0
+    },
+    "loss_seg40": {
+        "type": "cross_entropy_loss",
+        "ignore": 255
+    },
+    "metrics": [
+        "AverageMeter", "MeanIoU", "RMSE"
+    ],
+    "lr_scheduler": {
+        "type": "MultiStepLR",
+        "step_size": 50,
+        "gamma": 0.1
+    },
     "trainer": {
         "epochs": 1,
-
         "save_dir": "saved/",
         "save_period": 1,
         "verbosity": 2,
-        
         "monitor": "min val_loss",
         "early_stop": 10,
         "tensorboard": true
