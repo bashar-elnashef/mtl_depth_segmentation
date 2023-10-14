@@ -6,11 +6,19 @@ import pandas as pd
 from pathlib import Path
 from itertools import repeat
 from collections import OrderedDict
+from torchvision import transforms
 import torch 
 import torch.nn as nn
 import gdown
+import numpy as np
+import cv2
 
-
+KEYS_TO_DTYPES = {
+    "seg40": torch.long,
+    "mask": torch.long,
+    "depth": torch.float,
+    "normals": torch.float,
+}
 def conv3x3(in_channels, out_channels, stride=1, dilation=1, groups=1, bias=False):
     """3x3 Convolution: Depthwise: https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html"""
     return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=dilation, dilation=dilation, bias=bias, groups=groups)
@@ -161,6 +169,12 @@ def write_json(content, fname):
     with fname.open('wt') as handle:
         json.dump(content, handle, indent=4, sort_keys=False)
 
+
+def inf_loop(data_loader):
+    ''' wrapper function for endless data loader. '''
+    for loader in repeat(data_loader):
+        yield from loader
+
 def prepare_device(n_gpu_use):
     """
     setup GPU device if available. get gpu device indices which are used for DataParallel
@@ -177,3 +191,90 @@ def prepare_device(n_gpu_use):
     device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
     list_ids = list(range(n_gpu_use))
     return device, list_ids
+
+class MetricTracker:
+    def __init__(self, *keys, writer=None):
+        self.writer = writer
+        self._data = pd.DataFrame(index=keys, columns=['total', 'counts', 'average'])
+        self.reset()
+
+    def reset(self):
+        for col in self._data.columns:
+            self._data[col].values[:] = 0
+
+    def update(self, key, value, n=1):
+        if self.writer is not None:
+            self.writer.add_scalar(key, value)
+        self._data.total[key] += value * n
+        self._data.counts[key] += n
+        self._data.average[key] = self._data.total[key] / self._data.counts[key]
+
+    def avg(self, key):
+        return self._data.average[key]
+
+    def result(self):
+        return dict(self._data.average)
+
+
+def fast_cm(preds, gt, n_classes):
+    """Computing confusion matrix faster.
+    Args:
+      preds (Tensor) : predictions (either flatten or of size (len(gt), top-N)).
+      gt (Tensor) : flatten gt.
+      n_classes (int) : number of classes.
+    Returns:
+      Confusion matrix (Tensor of size (n_classes, n_classes)).
+    """
+    cm = np.zeros((n_classes, n_classes),dtype=np.int_)
+    #print(gt.shape)
+    #i,a,p, n = gt.shape[0]
+
+    for i in range(gt.shape[0]):
+        a = gt[i]
+        p = preds[i]
+        cm[a, p] += 1
+    return cm
+
+def compute_iu(cm):
+    """Compute IU from confusion matrix.
+    Args:
+      cm (Tensor) : square confusion matrix.
+    Returns:
+      IU vector (Tensor).
+    """
+    pi = 0
+    gi = 0
+    ii = 0
+    denom = 0
+    n_classes = cm.shape[0]
+    # IU is between 0 and 1, hence any value larger than that can be safely ignored
+    default_value = 2
+    IU = np.ones(n_classes) * default_value
+    for i in range(n_classes):
+        pi = sum(cm[:, i])
+        gi = sum(cm[i, :])
+        ii = cm[i, i]
+        denom = pi + gi - ii
+        if denom > 0:
+            IU[i] = ii / denom
+    return IU
+
+
+def get_transforms(img_scale=None, depth_scale=None, crop_size=None, mean=None, std=None):
+    # Augmentation parameters and functions.
+    mean = np.array(mean).reshape((1, 1, 3))
+    std = np.array(std).reshape((1, 1, 3))
+
+    normalise_params = [img_scale, mean, std, depth_scale,]
+
+    trsfm_train = transforms.Compose([RandomMirror(), 
+                                        RandomCrop(self._crop_size), 
+                                        Normalise(*self._normalise_params), 
+                                        ToTensor()])
+
+    trsfm_val = transforms.Compose([Normalise(*self._normalise_params),
+                                    ToTensor()])
+
+    return trsfm_train, trsfm_val
+
+

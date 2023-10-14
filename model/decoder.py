@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from utils.util import conv3x3, conv1x1, batchnorm, convbnrelu
 
 def make_list(x):

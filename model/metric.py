@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from utils.util import fast_cm, compute_iu
 
 class AverageMeter:
     """Simple running average estimator.
@@ -39,14 +40,14 @@ class MeanIoU:
       name (str): descriptor of the estimator.
     """
 
-    def __init__(self, num_classes):
+    def __init__(self, num_classes=40):
         if isinstance(num_classes, (list, tuple)):
             num_classes = num_classes[0]
         assert isinstance(
             num_classes, int
         ), f"Number of classes must be int, got {num_classes}"
         self.num_classes = num_classes
-        self.name = "meaniou"
+        self.name = "MeanIoU"
         self.reset()
 
     def reset(self):
@@ -87,7 +88,7 @@ class RMSE:
 
     def __init__(self, ignore_val=0):
         self.ignore_val = ignore_val
-        self.name = "rmse"
+        self.name = "RMSE"
         self.reset()
 
     def reset(self):

@@ -20,7 +20,8 @@ class ConfigParser:
         """
         # load config file and apply modification
         self._config = config
-
+        self.resume = resume
+        
         # set save_dir where trained model and log will be saved.
         save_dir = Path(self.config['trainer']['save_dir'])
 

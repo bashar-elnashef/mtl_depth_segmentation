@@ -1,9 +1,10 @@
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 def cross_entropy_loss(ignore_index=None):
     """"""
     return nn.CrossEntropyLoss(ignore_index=ignore_index)
-
 
 class InvHuberLoss(nn.Module):
     """Inverse Huber Loss for depth estimation.

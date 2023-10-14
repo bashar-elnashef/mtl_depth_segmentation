@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 from utils import util
 from pathlib import Path
 from PIL import Image
+import numpy as np
 
 class CustomNYUv2Dataset(Dataset):
 
