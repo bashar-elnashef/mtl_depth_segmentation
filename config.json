@@ -1,5 +1,5 @@
 {
-    "name": "MTL-Segmention-Depth-Normals",
+    "name": "MTL-Segmention-Depth",
     "n_gpu": 1,
     "masks": ["seg40", "depth"],
     "architecture": {
@@ -28,7 +28,7 @@
             "shuffle": true,
             "validation_split": 0.0,
             "mode": "train",
-            "num_workers": 2
+            "num_workers": 1
         }
     },
     "data_loader_test": {
@@ -37,9 +37,9 @@
             "data_dir": "data/",
             "batch_size": 16,
             "shuffle": true,
-            "validation_split": 0.0,
+            "validation_split": 0.6,
             "mode": "test",
-            "num_workers": 2
+            "num_workers": 1
         }
     },
     "optimizer_encoder": {
@@ -47,15 +47,15 @@
         "args":{
             "lr": 0.01,
             "momentum": 0.9,
-            "weight_decay": 0.00001
+            "weight_decay": 0.0001
         }
     },
     "optimizer_decoder": {
         "type": "SGD",
         "args":{
-            "lr": 0.001,
+            "lr": 0.01,
             "momentum": 0.9,
-            "weight_decay": 0.00001
+            "weight_decay": 0.0001
         }
     },
     "loss_depth": {
@@ -85,13 +85,14 @@
         "gamma": 0.1
     },
     "trainer": {
-        "epochs": 10,
+        "epochs": 1,
         "save_dir": "saved/",
         "save_period": 1,
         "verbosity": 2,
         "monitor": "min val_loss",
         "early_stop": 10,
-        "tensorboard": true
+        "tensorboard": true,
+        "show_log_on_screen": true
     },
     "data_downloader":{
         "type": "NYUV2Downloader",

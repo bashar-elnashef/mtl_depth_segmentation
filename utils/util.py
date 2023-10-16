@@ -57,7 +57,6 @@ class Normalise(object):
         depth_scale (float): Depth divisor for depth annotations.
 
     """
-
     def __init__(self, scale, mean, std, depth_scale=1.0):
         self.scale = scale
         self.mean = mean
@@ -72,10 +71,8 @@ class Normalise(object):
         
 class RandomCrop(object):
     """Crop randomly the image in a sample.
-
     Args:
         crop_size (int): Desired output size.
-
     """
 
     def __init__(self, crop_size):
@@ -99,14 +96,12 @@ class RandomCrop(object):
 
 
 class ToTensor(object):
-    """Convert ndarrays in sample to Tensors."""
-
+    """Convert ndarrays in sample to Tensors.
+    """
     def __call__(self, sample):
         image = sample["image"]
         msk_keys = sample["names"]
-        # swap color axis because
-        # numpy image: H x W x C
-        # torch image: C X H X W
+        # swap color axis because: numpy image: H x W x C and torch image: C X H X W
         sample["image"] = torch.from_numpy(image.transpose((2, 0, 1)))
         for msk_key in msk_keys:
             sample[msk_key] = torch.from_numpy(sample[msk_key]).to(
@@ -116,7 +111,6 @@ class ToTensor(object):
         
 class RandomMirror(object):
     """Randomly flip the image and the mask"""
-
     def __call__(self, sample):
         image = sample["image"]
         msk_keys = sample["names"]
@@ -133,7 +127,6 @@ class AverageMeter:
     Args:
       momentum (float): running average decay.
     """
-
     def __init__(self, momentum=0.99):
         self.momentum = momentum
         self.avg = 0
@@ -151,8 +144,6 @@ class AverageMeter:
         else:
             self.avg = self.avg * self.momentum + val * (1.0 - self.momentum)
         self.val = val
-
-
 
 def ensure_dir(dirname):
     dirname = Path(dirname)
@@ -260,21 +251,30 @@ def compute_iu(cm):
     return IU
 
 
-def get_transforms(img_scale=None, depth_scale=None, crop_size=None, mean=None, std=None):
-    # Augmentation parameters and functions.
+def get_transforms(mode='train', mg_scale=None, depth_scale=None, crop_size=None, mean=None, std=None):
+    """ Augmentation parameters and functions. """
+    img_scale = 1. / 255
+    depth_scale = 5000.
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]     
+
     mean = np.array(mean).reshape((1, 1, 3))
     std = np.array(std).reshape((1, 1, 3))
 
     normalise_params = [img_scale, mean, std, depth_scale,]
 
-    trsfm_train = transforms.Compose([RandomMirror(), 
-                                        RandomCrop(self._crop_size), 
-                                        Normalise(*self._normalise_params), 
-                                        ToTensor()])
-
-    trsfm_val = transforms.Compose([Normalise(*self._normalise_params),
+    if mode == 'train':
+        crop_size = 400
+        trsfm = transforms.Compose([RandomMirror(), 
+                                    RandomCrop(crop_size), 
+                                    Normalise(*normalise_params), 
                                     ToTensor()])
+    elif mode == 'test':
+        trsfm = transforms.Compose([Normalise(*normalise_params),
+                                    ToTensor()])
+    else:
+        print('[INFO] mode given is not supported!')
+        return None
 
-    return trsfm_train, trsfm_val
-
+    return trsfm
 

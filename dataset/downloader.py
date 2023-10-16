@@ -18,7 +18,6 @@ from itertools import repeat
 from collections import OrderedDict
 
 
-
 class NYUV2Downloader(object):
     def __init__(self, url, destination=None, download=False, 
                     procesess=False, exist_ok=True, save_colored=True):
@@ -174,7 +173,3 @@ class NYUV2Downloader(object):
     def _bitget(self, byteval, idx):
         return ((byteval & (1 << idx)) != 0)
     
-    # TODO: add getter methods for data paths and lengths 
-    # required for the dataset and dataloader classes
-
-    # TODO: add a __str__ method to the class 

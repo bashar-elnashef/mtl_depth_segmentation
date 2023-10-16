@@ -14,12 +14,13 @@ class Trainer(BaseTrainer):
     Trainer class
     """
     def __init__(self, model, criterion, metric_ftns, optimizer, config, device,
-                 data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None):
+                 data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None, show_log_on_screen=True):
         super().__init__(model, criterion, metric_ftns, optimizer, config)
         self.config = config
         self.masks = self.config['masks']
         self.metrics = self.config['metrics']
         self.metric_ftns = metric_ftns
+        self.show_log_on_screen = show_log_on_screen
 
         self.device = device
         self.data_loader = data_loader
@@ -33,6 +34,8 @@ class Trainer(BaseTrainer):
 
         self.valid_data_loader = valid_data_loader
         self.do_validation = self.valid_data_loader is not None
+        ##
+        self.do_validation = False
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
 
@@ -60,7 +63,7 @@ class Trainer(BaseTrainer):
 
         pbar = tqdm(self.data_loader)
 
-        loss_coeffs = (0.5, 0.5)
+        loss_coeffs = (1., 1.)
         grad_norm = 0.
         batch_idx = 0
 
@@ -70,23 +73,11 @@ class Trainer(BaseTrainer):
             targets = [sample[k].to(self.device) for k in self.data_loader.dataset.masks]
             outputs = self.model(data) # Forward
 
-            # for out, target, crit, loss_coeff in zip(outputs, targets, self.criterion, loss_coeffs):
-            #     loss += loss_coeff * crit(
-            #         F.interpolate(
-            #             out, size=target.size()[1:], mode="bilinear", align_corners=False
-            #         ).squeeze(dim=1),
-            #         target.squeeze(dim=1),
-            #     )
+            losses = [crit(F.interpolate(out, size=target.size()[1:], mode="bilinear", 
+                            align_corners=False).squeeze(dim=1),target.squeeze(dim=1))
+                for out, target, crit, loss_coeff in zip(outputs, targets, self.criterion, loss_coeffs)] 
 
-            loss_seg40 = loss_coeffs[0] * self.criterion[0](
-                F.interpolate(outputs[0], size=targets[0].size()[1:], mode="bilinear", align_corners=False).squeeze(dim=1),
-                    targets[0].squeeze(dim=1),)
-
-            loss_depth = loss_coeffs[1] * self.criterion[1](
-                F.interpolate(outputs[1], size=targets[1].size()[1:], mode="bilinear", align_corners=False).squeeze(dim=1),
-                    targets[1].squeeze(dim=1),)
-
-            loss = loss_seg40 + loss_depth
+            loss = sum(c * l for c, l in zip(loss_coeffs, losses))
 
             # Backward
             for opt in self.optimizer: opt.zero_grad()
@@ -98,20 +89,16 @@ class Trainer(BaseTrainer):
 
             loss_meter.update(loss.item())
             pbar.set_description(
-                "Loss {:.3f} | Avg. Loss {:.3f}".format(loss.item(), loss_meter.avg)
+                f'Loss {loss.item():.3f} | Avg. Loss {loss_meter.avg:.3f}'
             )
 
             self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
             self.train_metrics.update('loss', loss.item())
 
-            for msk in self.masks:
-                self.train_metrics.update(f'loss_{msk}', locals()[f'loss_{msk}'].item())
+            for idx, msk in enumerate(self.masks):
+                self.train_metrics.update(f'loss_{msk}', losses[idx].item())
 
             if batch_idx % self.log_step == 0:
-                # self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
-                #     epoch,
-                #     self._progress(batch_idx),
-                #     loss.item()))
                 self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
             if batch_idx == self.len_epoch:

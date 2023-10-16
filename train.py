@@ -66,8 +66,9 @@ def main(config: ConfigParser):
             (optimizer[f'optimizer_{coder}'], milestones=milestones, gamma=gamma) for coder in ['encoder', 'decoder']}
     lr_schedulers = list(lr_scheduler.values())
 
-    # Starting the training loop 
+    show_log_on_screen = config['trainer']['show_log_on_screen']
 
+    # Initialize the trainer  
     trainer = Trainer(model, 
                       criterions, 
                       metrics, 
@@ -76,8 +77,9 @@ def main(config: ConfigParser):
                       device=device,
                       data_loader=data_loader,
                       valid_data_loader=valid_data_loader,
-                      lr_scheduler=lr_schedulers)
-
+                      lr_scheduler=lr_schedulers,
+                      show_log_on_screen=show_log_on_screen)
+    # Train
     trainer.train()
 
 

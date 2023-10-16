@@ -94,7 +94,7 @@ class ConfigParser:
         assert all(
             k not in module_args for k in kwargs
         ), 'Overwriting kwargs given in config file is not allowed'
-        module_args.update(kwargs)
+        module_args |= kwargs
         return getattr(module, module_name)(*args, **module_args)
 
 
@@ -123,20 +123,20 @@ class ConfigParser:
         return self._log_dir
 
 
-# def _get_opt_name(flags):
-#     for flg in flags:
-#         if flg.startswith('--'):
-#             return flg.replace('--', '')
-#     return flags[0].replace('--', '')
+def _get_opt_name(flags):
+    for flg in flags:
+        if flg.startswith('--'):
+            return flg.replace('--', '')
+    return flags[0].replace('--', '')
 
-# def _set_by_path(tree, keys, value):
-#     """Set a value in a nested object in tree by sequence of keys."""
-#     keys = keys.split(';')
-#     _get_by_path(tree, keys[:-1])[keys[-1]] = value
+def _set_by_path(tree, keys, value):
+    """Set a value in a nested object in tree by sequence of keys."""
+    keys = keys.split(';')
+    _get_by_path(tree, keys[:-1])[keys[-1]] = value
 
-# def _get_by_path(tree, keys):
-#     """Access a nested object in tree by sequence of keys."""
-#     return reduce(getitem, keys, tree)
+def _get_by_path(tree, keys):
+    """Access a nested object in tree by sequence of keys."""
+    return reduce(getitem, keys, tree)
 
 
 

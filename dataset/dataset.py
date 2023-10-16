@@ -16,7 +16,7 @@ class CustomNYUv2Dataset(Dataset):
         self._data_path = Path(data_path)
         self._image_paths = [list(self._data_path.glob(f'{msk}/{mode}/*.png')) for msk in self.masks]
         self._image_paths.append(list(self._data_path.glob(f'image/{mode}/*.png')))
-        self._paths = [[*r] for r in zip(*self._image_paths)]
+        self._paths = [[*r] for r in zip(*self._image_paths)][:1]
 
         self.trsfm = trsfm
 
@@ -37,7 +37,6 @@ class CustomNYUv2Dataset(Dataset):
             assert len(sample[msk].shape) == 2, err_msg
 
         if self.trsfm:
-            # TODO: initialise trsfms with mask names beforehand, seems stupid for it to be here. 
             sample["names"] = self.masks
             sample = self.trsfm(sample)
             # --> the names key should be removed by the transformation
