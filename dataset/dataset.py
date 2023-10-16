@@ -16,7 +16,7 @@ class CustomNYUv2Dataset(Dataset):
         self._data_path = Path(data_path)
         self._image_paths = [list(self._data_path.glob(f'{msk}/{mode}/*.png')) for msk in self.masks]
         self._image_paths.append(list(self._data_path.glob(f'image/{mode}/*.png')))
-        self._paths = [[*r] for r in zip(*self._image_paths)][:1]
+        self._paths = [[*r] for r in zip(*self._image_paths)]
 
         self.trsfm = trsfm
 
