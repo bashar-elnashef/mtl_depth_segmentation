@@ -19,6 +19,8 @@ KEYS_TO_DTYPES = {
     "depth": torch.float,
     "normals": torch.float,
 }
+
+# TODO: Should be moved to a different script.  
 def conv3x3(in_channels, out_channels, stride=1, dilation=1, groups=1, bias=False):
     """3x3 Convolution: Depthwise: https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html"""
     return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=dilation, dilation=dilation, bias=bias, groups=groups)

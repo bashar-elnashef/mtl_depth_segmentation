@@ -3,6 +3,7 @@ import torch.nn as nn
 import model.decoder as decode
 import model.encoder as encode
 
+# TODO: combine the encoder, coder and model scripts into one (model.py). General stuff should be moved to a helper script for NN's.  
 def hydranet(encoder=None, decoder=None, dec_cls=None):
     """Create a model instance from decoder and encoder"""
     encoder = getattr(encode, encoder)()

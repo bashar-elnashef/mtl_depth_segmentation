@@ -32,6 +32,7 @@ class AverageMeter:
             self.avg = self.avg * self.momentum + val * (1.0 - self.momentum)
         self.val = val
 
+# TODO: Need to check this class.
 class MeanIoU:
     """Mean-IoU computational block for semantic segmentation.
     Args:

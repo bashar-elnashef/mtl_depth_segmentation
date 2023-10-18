@@ -44,12 +44,18 @@ def main(config: ConfigParser):
 
     masks = config['masks']
 
+    # Criterion
+    # TODO: Define a custom loss class that also consider the weights as 
+    # unknowns optimized by a 3rd optimizer. 
+    # TODO: Accuracy metric to be used for updating weights. 
     criterion = {f'{msk}': getattr(model_loss, config[f'loss_{msk}']['type'])
                     (ignore_index=config[f'loss_{msk}']['ignore']).cuda() for msk in masks}
     criterions = list(criterion.values())
 
+    # TODO: Add additional metrics to be used in both traning and validation steps.
     metrics = [config.init_obj(met, module_metric) for met in config['metrics']]
 
+    # TODO: Add optimizer 3 for the individual task loss weights.
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
     trainable_params = {coder: filter(lambda p: p.requires_grad, architecture[coder].parameters()) 
                                         for coder in ['encoder', 'decoder']}
